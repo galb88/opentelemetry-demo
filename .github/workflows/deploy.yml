@@ -1,0 +1,29 @@
+# .github/workflows/deploy-k8s.yml
+name: Deploy OpenTelemetry Demo to Kubernetes
+
+on:
+  push:
+    branches:
+      - main  # vagy a fő branch-ed
+
+jobs:
+  deploy:
+    runs-on: ubuntu-latest
+
+    steps:
+      # 1️⃣ Repo checkout
+      - name: Checkout repository
+        uses: actions/checkout@v3
+
+      # 2️⃣ Set up kubectl
+      - name: Set up kubectl
+        run: |
+          mkdir -p ~/.kube
+          echo "${{ secrets.KUBECONFIG }}" | base64 -d > ~/.kube/config
+
+      # 3️⃣ Deploy Kubernetes-be a manifest alapján
+      - name: Deploy to Kubernetes
+        run: |
+          kubectl apply -f kubernetes/opentelemetry-demo.yaml
+          kubectl rollout status deployment/frontend -n otel-demo --timeout=300s
+          kubectl rollout status deployment/otel-collector -n otel-demo --timeout=300s
